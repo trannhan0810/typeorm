@@ -2508,7 +2508,25 @@ export class SelectQueryBuilder<Entity extends ObjectLiteral>
                         const alias = this.expressionMap.aliases.find(
                             (alias) => alias.name === aliasName,
                         )
-                        if (alias && alias.hasMetadata) {
+                        //
+                        if (alias) {
+                            if (!alias.hasMetadata) {
+                                console.log(
+                                    this.escape(aliasName) +
+                                        "." +
+                                        this.escape(propertyPath) +
+                                        " " +
+                                        orderValue,
+                                )
+                                return (
+                                    this.escape(aliasName) +
+                                    "." +
+                                    this.escape(propertyPath) +
+                                    " " +
+                                    orderValue
+                                )
+                            }
+
                             const column =
                                 alias.metadata.findColumnWithPropertyPath(
                                     propertyPath,
@@ -3667,6 +3685,8 @@ export class SelectQueryBuilder<Entity extends ObjectLiteral>
                     const aliasName = criteriaParts[0]
                     const propertyPath = criteriaParts.slice(1).join(".")
                     const alias = this.expressionMap.findAliasByName(aliasName)
+                    if (!alias.hasMetadata) return this.escape(propertyPath)
+
                     const column =
                         alias.metadata.findColumnWithPropertyPath(propertyPath)
                     return (
@@ -3707,6 +3727,14 @@ export class SelectQueryBuilder<Entity extends ObjectLiteral>
                 const aliasName = criteriaParts[0]
                 const propertyPath = criteriaParts.slice(1).join(".")
                 const alias = this.expressionMap.findAliasByName(aliasName)
+                if (!alias.hasMetadata) {
+                    const escapePropertyPath = propertyPath.includes('"')
+                        ? this.escape(propertyPath)
+                        : propertyPath
+                    orderByObject[escapePropertyPath] = orderBys[orderCriteria]
+                    return
+                }
+
                 const column =
                     alias.metadata.findColumnWithPropertyPath(propertyPath)
                 orderByObject[
@@ -3740,6 +3768,7 @@ export class SelectQueryBuilder<Entity extends ObjectLiteral>
             }
         })
 
+        console.log(selectString, orderByObject)
         return [selectString, orderByObject]
     }
 
